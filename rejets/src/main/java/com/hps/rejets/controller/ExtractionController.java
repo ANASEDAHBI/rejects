@@ -1,3 +1,121 @@
+
+package com.hps.rejets.controller;
+
+import com.hps.rejets.response.FileProcessResponse;
+import com.hps.rejets.response.ResultResponse;
+import com.hps.rejets.service.ExtractionService;
+import com.hps.rejets.service.RecyclingScriptGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.stream.Stream;
+
+@RestController
+@RequestMapping("/api")
+@CrossOrigin(origins = "http://localhost:4200")  // Autoriser le frontend à accéder à l'API
+public class ExtractionController {
+
+    private final ExtractionService extractionService;
+    private final RecyclingScriptGenerator recyclingScriptGenerator;
+    private static final String UPLOAD_DIR = System.getProperty("user.dir") + File.separator + "uploads";
+    private static final String GENERATED_SCRIPTS_DIR = System.getProperty("user.dir") + File.separator + "generated-scripts";
+
+    private static final Logger logger = LoggerFactory.getLogger(ExtractionController.class);
+
+    public ExtractionController(ExtractionService extractionService, RecyclingScriptGenerator recyclingScriptGenerator) {
+        this.extractionService = extractionService;
+        this.recyclingScriptGenerator = recyclingScriptGenerator;
+    }
+
+    @PostMapping("/upload")
+    public ResponseEntity<String> uploadFiles(@RequestParam("sqlFile") MultipartFile sqlFile,
+                                              @RequestParam("textFile") MultipartFile textFile) {
+
+        logger.info("Fichier SQL reçu : {}", sqlFile.getOriginalFilename());
+        logger.info("Fichier TXT reçu : {}", textFile.getOriginalFilename());
+        try {
+            Files.createDirectories(Paths.get(UPLOAD_DIR));
+            Path sqlFilePath = Paths.get(UPLOAD_DIR, "uploaded.sql");
+            Path textFilePath = Paths.get(UPLOAD_DIR, "uploaded.txt");
+            Files.write(sqlFilePath, sqlFile.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            Files.write(textFilePath, textFile.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            return ResponseEntity.ok("Fichiers uploadés avec succès.");
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de l'upload des fichiers : " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/analyze")
+    public FileProcessResponse analyzeFiles() throws IOException {
+        String sqlFilePath = Paths.get(UPLOAD_DIR, "uploaded.sql").toString();
+        String textFilePath = Paths.get(UPLOAD_DIR, "uploaded.txt").toString();
+        return extractionService.extractAndProcess(sqlFilePath, textFilePath);
+    }
+
+    @GetMapping(value = "/recycle", produces = "text/plain;charset=UTF-8")
+    public ResponseEntity<String> recycleScript() throws IOException {
+        String sqlFilePath = Paths.get(UPLOAD_DIR, "uploaded.sql").toString();
+        String textFilePath = Paths.get(UPLOAD_DIR, "uploaded.txt").toString();
+        FileProcessResponse response = extractionService.extractAndProcess(sqlFilePath, textFilePath);
+        List<ResultResponse> resultResponses = response.getResultResponses();
+        String sqlScript = recyclingScriptGenerator.generateRecyclingScript(resultResponses);
+        String dateSuffix = LocalDate.now().format(DateTimeFormatter.ofPattern("ddMMyyyy"));
+        String fileName = "recycling_script_" + dateSuffix + ".sql";
+        Files.createDirectories(Paths.get(GENERATED_SCRIPTS_DIR));
+        Path outputPath = Paths.get(GENERATED_SCRIPTS_DIR, fileName);
+        Files.write(outputPath, sqlScript.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        return ResponseEntity.ok().header(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8")
+                .body("Le fichier '" + fileName + "' a été généré et enregistré dans : " + outputPath.toString() + "\n\n" + sqlScript);
+    }
+
+    @GetMapping("/download")
+    public ResponseEntity<byte[]> downloadGeneratedFile() throws IOException {
+        String dateSuffix = LocalDate.now().format(DateTimeFormatter.ofPattern("ddMMyyyy"));
+        String fileName = "recycling_script_" + dateSuffix + ".sql";
+        Path filePath = Paths.get(GENERATED_SCRIPTS_DIR, fileName);
+        if (!Files.exists(filePath)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+        byte[] fileContent = Files.readAllBytes(filePath);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName);
+        return ResponseEntity.ok().headers(headers).body(fileContent);
+    }
+
+    @DeleteMapping("/delete")
+    public ResponseEntity<String> deleteRecyclingScript() {
+        String dateSuffix = LocalDate.now().format(DateTimeFormatter.ofPattern("ddMMyyyy"));
+        String fileName = "recycling_script_" + dateSuffix + ".sql";
+        Path filePath = Paths.get(GENERATED_SCRIPTS_DIR, fileName);
+        try {
+            if (Files.exists(filePath)) {
+                Files.delete(filePath);
+                return ResponseEntity.ok("Le fichier '" + fileName + "' a été supprimé avec succès.");
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Le fichier '" + fileName + "' n'existe pas.");
+            }
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de la suppression du fichier : " + e.getMessage());
+        }
+    }
+}
+
+
+/*
 package com.hps.rejets.controller;
 
 import com.hps.rejets.response.FileProcessResponse;
@@ -153,3 +271,5 @@ public class ExtractionController {
     }
 
 }
+
+ */
