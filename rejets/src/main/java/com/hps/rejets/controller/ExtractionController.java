@@ -31,7 +31,7 @@ import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "http://localhost:4200")  // Autoriser le frontend à accéder à l'API
+@CrossOrigin(origins = "*")
 public class ExtractionController {
 
     private final ExtractionService extractionService;
