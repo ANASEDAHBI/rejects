@@ -5,6 +5,8 @@ import com.hps.rejets.response.FileProcessResponse;
 import com.hps.rejets.response.ResultResponse;
 import com.hps.rejets.service.ExtractionService;
 import com.hps.rejets.service.RecyclingScriptGenerator;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -13,8 +15,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -22,6 +26,7 @@ import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 @RestController
@@ -41,6 +46,48 @@ public class ExtractionController {
         this.recyclingScriptGenerator = recyclingScriptGenerator;
     }
 
+
+    @PostMapping("/upload")
+    public ResponseEntity<String> uploadFiles(@RequestParam("sqlFile") MultipartFile sqlFile,
+                                              @RequestParam("textFile") MultipartFile textFile) {
+
+        try {
+            Files.createDirectories(Paths.get(UPLOAD_DIR));
+
+            // Enregistrement du fichier SQL
+            Path sqlFilePath = Paths.get(UPLOAD_DIR, "uploaded.sql");
+            Files.write(sqlFilePath, sqlFile.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+
+            // Vérification si le fichier est un PDF
+            if (textFile.getOriginalFilename() != null && textFile.getOriginalFilename().endsWith(".pdf")) {
+                Path textFilePath = Paths.get(UPLOAD_DIR, "uploaded.txt");
+                convertPdfToText(textFile, textFilePath);
+            } else {
+                Path textFilePath = Paths.get(UPLOAD_DIR, "uploaded.txt");
+                Files.write(textFilePath, textFile.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            }
+
+            return ResponseEntity.ok("Fichiers uploadés avec succès.");
+
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de l'upload des fichiers : " + e.getMessage());
+        }
+    }
+
+    /**
+     * Convertit un fichier PDF en texte brut et le sauvegarde en fichier .txt.
+     */
+    private void convertPdfToText(MultipartFile pdfFile, Path outputPath) throws IOException {
+        try (InputStream inputStream = pdfFile.getInputStream();
+             PDDocument document = PDDocument.load(inputStream);
+             BufferedWriter writer = Files.newBufferedWriter(outputPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+
+            PDFTextStripper pdfStripper = new PDFTextStripper();
+            String text = pdfStripper.getText(document);
+            writer.write(text);
+        }
+    }
+/*
     @PostMapping("/upload")
     public ResponseEntity<String> uploadFiles(@RequestParam("sqlFile") MultipartFile sqlFile,
                                               @RequestParam("textFile") MultipartFile textFile) {
@@ -59,15 +106,17 @@ public class ExtractionController {
         }
     }
 
+ */
+
     @GetMapping("/analyze")
-    public FileProcessResponse analyzeFiles() throws IOException {
+    public FileProcessResponse analyzeFiles() throws IOException, ExecutionException {
         String sqlFilePath = Paths.get(UPLOAD_DIR, "uploaded.sql").toString();
         String textFilePath = Paths.get(UPLOAD_DIR, "uploaded.txt").toString();
         return extractionService.extractAndProcess(sqlFilePath, textFilePath);
     }
 
     @GetMapping(value = "/recycle", produces = "text/plain;charset=UTF-8")
-    public ResponseEntity<String> recycleScript() throws IOException {
+    public ResponseEntity<String> recycleScript() throws IOException, ExecutionException {
         String sqlFilePath = Paths.get(UPLOAD_DIR, "uploaded.sql").toString();
         String textFilePath = Paths.get(UPLOAD_DIR, "uploaded.txt").toString();
         FileProcessResponse response = extractionService.extractAndProcess(sqlFilePath, textFilePath);
@@ -98,18 +147,30 @@ public class ExtractionController {
 
     @DeleteMapping("/delete")
     public ResponseEntity<String> deleteRecyclingScript() {
-        String dateSuffix = LocalDate.now().format(DateTimeFormatter.ofPattern("ddMMyyyy"));
-        String fileName = "recycling_script_" + dateSuffix + ".sql";
-        Path filePath = Paths.get(GENERATED_SCRIPTS_DIR, fileName);
         try {
-            if (Files.exists(filePath)) {
-                Files.delete(filePath);
-                return ResponseEntity.ok("Le fichier '" + fileName + "' a été supprimé avec succès.");
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Le fichier '" + fileName + "' n'existe pas.");
+            // Supprimer tous les fichiers dans GENERATED_SCRIPTS_DIR
+            File generatedScriptsDir = new File(GENERATED_SCRIPTS_DIR);
+            if (generatedScriptsDir.exists() && generatedScriptsDir.isDirectory()) {
+                for (File file : generatedScriptsDir.listFiles()) {
+                    if (file.isFile()) {
+                        Files.delete(file.toPath());
+                    }
+                }
             }
+
+            // Supprimer tous les fichiers dans UPLOAD_DIR
+            File uploadDir = new File(UPLOAD_DIR);
+            if (uploadDir.exists() && uploadDir.isDirectory()) {
+                for (File file : uploadDir.listFiles()) {
+                    if (file.isFile()) {
+                        Files.delete(file.toPath());
+                    }
+                }
+            }
+
+            return ResponseEntity.ok("Tous les fichiers des répertoires GENERATED_SCRIPTS_DIR et UPLOAD_DIR ont été supprimés avec succès.");
         } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de la suppression du fichier : " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de la suppression des fichiers : " + e.getMessage());
         }
     }
 }

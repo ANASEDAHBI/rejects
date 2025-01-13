@@ -18,13 +18,66 @@ public class SqlInsertAnalyzer {
 
     public SqlAnalyzerResponse extractValues(String filePath) {
         SqlAnalyzerResponse sqlAnalyzerResponse = new SqlAnalyzerResponse();
+        Map<String, String> maps = new HashMap<>();
+        int insertCount = 0;
+
+        Pattern insertPattern = Pattern.compile(
+                "INSERT INTO\\s+[^()]+\\((.*?)\\)\\s+VALUES\\s*\\((.*?)\\)",
+                Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+        );
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            StringBuilder sqlContent = new StringBuilder();
+            String line;
+
+            // Lire tout le fichier et stocker son contenu
+            while ((line = reader.readLine()) != null) {
+                sqlContent.append(line).append(" ");
+            }
+
+            Matcher matcher = insertPattern.matcher(sqlContent.toString());
+
+            while (matcher.find()) {
+                insertCount++;
+                String valuesPart = matcher.group(2);
+
+                // Séparer les valeurs sans casser celles entre apostrophes
+                String[] values = valuesPart.split(",(?=(?:[^\']*\'[^\']*\')*[^\']*$)");
+
+                if (values.length > 0) {
+                    String firstValue = values[0].trim().replaceAll("['\"]", "");
+
+                    if (firstValue.length() > 6) {
+                        String extractedValue = firstValue.substring(firstValue.length() - 7, firstValue.length() - 1);
+                        maps.put(firstValue, extractedValue);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Erreur lors de la lecture du fichier SQL : " + e.getMessage());
+        }
+
+        System.out.println("Nombre d'inserts trouvés : " + insertCount);
+        System.out.println("Information : " + maps);
+        sqlAnalyzerResponse.setInsertCount(insertCount);
+        sqlAnalyzerResponse.setMaps(maps);
+        return sqlAnalyzerResponse;
+    }
+
+    /*
+    public SqlAnalyzerResponse extractValues(String filePath) {
+        SqlAnalyzerResponse sqlAnalyzerResponse = new SqlAnalyzerResponse();
 
         Map<String,String> maps = new HashMap<>();
         int insertCount = 0; // Initialisation du compteur d'inserts
 
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
-            Pattern insertPattern = Pattern.compile("INSERT INTO .*?\\((.*?)\\) VALUES \\((.*?)\\);", Pattern.CASE_INSENSITIVE);
+            Pattern insertPattern = Pattern.compile(
+                    "INSERT INTO\\s+[^()]+\\((.*?)\\)\\s+VALUES\\s*\\((.*?)\\)",
+                    Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+            );
+           // Pattern insertPattern = Pattern.compile("INSERT INTO .*?\\((.*?)\\) VALUES \\((.*?)\\);", Pattern.CASE_INSENSITIVE);
 
             while ((line = reader.readLine()) != null) {
                 Matcher matcher = insertPattern.matcher(line);
@@ -53,4 +106,6 @@ public class SqlInsertAnalyzer {
         sqlAnalyzerResponse.setMaps(maps);
         return sqlAnalyzerResponse;
     }
+
+     */
 }
