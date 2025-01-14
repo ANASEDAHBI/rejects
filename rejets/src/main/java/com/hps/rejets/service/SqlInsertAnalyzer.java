@@ -55,26 +55,28 @@ public class SqlInsertAnalyzer {
                 }
             }
 
+
  */
             while (matcher.find()) {
                 insertCount++;
                 String valuesPart = matcher.group(2);
 
-                // Nouvelle regex pour diviser les valeurs, y compris celles entourées de guillemets simples
+                // Diviser les valeurs en tenant compte des guillemets
                 String[] values = valuesPart.split(",(?=(?:[^']*'[^']*')*[^']*$)");
 
                 if (values.length > 0) {
-                    // Extraire uniquement la première valeur
-                    String firstValue = values[0].trim().replaceAll("['\"]", ""); // Nettoyer les guillemets
+                    // Nettoyer la première valeur et extraire uniquement le microfilm
+                    String firstValue = values[0].trim().replaceAll("['\"]", ""); // Supprimer les guillemets
 
-                    // Vérifier si la valeur contient uniquement des chiffres
-                    if (firstValue.matches("\\d+")) {
+                    // Ajouter une condition pour valider que firstValue contient uniquement le microfilm
+                    if (firstValue.matches("\\d{20,}")) { // Vérifie que c'est un nombre de 20 chiffres ou plus
                         maps.put(firstValue, firstValue); // Ajouter au map
                     } else {
-                        System.out.println("Valeur ignorée : " + firstValue);
+                        System.out.println("Valeur ignorée (non valide pour un microfilm) : " + firstValue);
                     }
                 }
             }
+
 
         } catch (IOException e) {
             throw new RuntimeException("Erreur lors de la lecture du fichier SQL : " + e.getMessage());
