@@ -37,7 +37,7 @@ public class SqlInsertAnalyzer {
 
             Matcher matcher = insertPattern.matcher(sqlContent.toString());
 
-/*
+
             while (matcher.find()) {
                 insertCount++;
                 String valuesPart = matcher.group(2);
@@ -47,16 +47,23 @@ public class SqlInsertAnalyzer {
 
                 if (values.length > 0) {
                     String firstValue = values[0].trim().replaceAll("['\"]", "");
-
-                    if (firstValue.length() > 6) {
+                    if (firstValue.matches("\\d{20,}")) {
                         String extractedValue = firstValue.substring(firstValue.length() - 7, firstValue.length() - 1);
                         maps.put(firstValue, extractedValue);
                     }
+                    /*
+                    if (firstValue.length() > 6) {
+
+                    }
+
+                     */
+
                 }
             }
 
 
- */
+
+            /*
             while (matcher.find()) {
                 insertCount++;
                 String valuesPart = matcher.group(2);
@@ -76,6 +83,8 @@ public class SqlInsertAnalyzer {
                     }
                 }
             }
+
+             */
 
 
         } catch (IOException e) {
