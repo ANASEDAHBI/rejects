@@ -119,7 +119,7 @@ public class ExtractionController {
      */
 
     @GetMapping("/analyze")
-    public ResponseEntity<FileProcessResponse> analyzeFiles() throws IOException, ExecutionException {
+    public ResponseEntity<FileProcessResponse> analyzeFiles() throws IOException {
         String sqlFilePath = Paths.get(UPLOAD_DIR, "uploaded.sql").toString();
         String textFilePath = Paths.get(UPLOAD_DIR, "uploaded.txt").toString();
         FileProcessResponse response = extractionService.extractAndProcess(sqlFilePath, textFilePath);

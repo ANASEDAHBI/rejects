@@ -421,7 +421,7 @@ public class FileProcessor {
  */
 
     public FileProcessResponse processFile(String filePath, SqlAnalyzerResponse sqlAnalyzerResponse) throws IOException {
-        FileProcessResponse fileProcessResponse = new FileProcessResponse("Error processing files: " + e.getMessage());
+        FileProcessResponse fileProcessResponse = new FileProcessResponse();
         List<String> extractedIRDs = new ArrayList<>();
         int irdCount = 0;
         List<ResultResponse> resultResponse = new ArrayList<>();

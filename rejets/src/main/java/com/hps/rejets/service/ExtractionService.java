@@ -18,7 +18,7 @@ public class ExtractionService {
         this.fileProcessor = fileProcessor;
     }
 
-    public FileProcessResponse extractAndProcess(String sqlFilePath, String textFilePath) throws IOException, ExecutionException {
+    public FileProcessResponse extractAndProcess(String sqlFilePath, String textFilePath) throws IOException {
         SqlAnalyzerResponse sqlAnalyzerResponse = sqlInsertAnalyzer.extractValues(sqlFilePath);
         return  fileProcessor.processFile(textFilePath,sqlAnalyzerResponse);
     }
