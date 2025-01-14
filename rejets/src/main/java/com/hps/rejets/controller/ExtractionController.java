@@ -108,12 +108,25 @@ public class ExtractionController {
 
  */
 
+    /*
     @GetMapping("/analyze")
     public FileProcessResponse analyzeFiles() throws IOException, ExecutionException {
         String sqlFilePath = Paths.get(UPLOAD_DIR, "uploaded.sql").toString();
         String textFilePath = Paths.get(UPLOAD_DIR, "uploaded.txt").toString();
         return extractionService.extractAndProcess(sqlFilePath, textFilePath);
     }
+
+     */
+
+    @GetMapping("/analyze")
+    public ResponseEntity<FileProcessResponse> analyzeFiles() throws IOException, ExecutionException {
+        String sqlFilePath = Paths.get(UPLOAD_DIR, "uploaded.sql").toString();
+        String textFilePath = Paths.get(UPLOAD_DIR, "uploaded.txt").toString();
+        FileProcessResponse response = extractionService.extractAndProcess(sqlFilePath, textFilePath);
+        return ResponseEntity.ok(response);
+
+    }
+
 
     @GetMapping(value = "/recycle", produces = "text/plain;charset=UTF-8")
     public ResponseEntity<String> recycleScript() throws IOException, ExecutionException {
