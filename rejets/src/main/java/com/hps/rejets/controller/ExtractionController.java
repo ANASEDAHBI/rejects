@@ -140,7 +140,9 @@ public class ExtractionController {
         Files.createDirectories(Paths.get(GENERATED_SCRIPTS_DIR));
         Path outputPath = Paths.get(GENERATED_SCRIPTS_DIR, fileName);
         Files.write(outputPath, sqlScript.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-        return ResponseEntity.ok().header(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8")
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8")
                 .body("Le fichier '" + fileName + "' a été généré et enregistré dans : " + outputPath.toString() + "\n\n" + sqlScript);
     }
 
