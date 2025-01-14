@@ -37,7 +37,7 @@ public class SqlInsertAnalyzer {
 
             Matcher matcher = insertPattern.matcher(sqlContent.toString());
 
-            /*
+/*
             while (matcher.find()) {
                 insertCount++;
                 String valuesPart = matcher.group(2);
@@ -55,21 +55,23 @@ public class SqlInsertAnalyzer {
                 }
             }
 
-             */
+ */
             while (matcher.find()) {
                 insertCount++;
                 String valuesPart = matcher.group(2);
 
-                // Séparer les valeurs sans casser celles entre apostrophes
-                String[] values = valuesPart.split(",(?=(?:[^\']*\'[^\']*\')*[^\']*$)");
+                // Nouvelle regex pour diviser les valeurs, y compris celles entourées de guillemets simples
+                String[] values = valuesPart.split(",(?=(?:[^']*'[^']*')*[^']*$)");
 
                 if (values.length > 0) {
+                    // Extraire uniquement la première valeur
                     String firstValue = values[0].trim().replaceAll("['\"]", ""); // Nettoyer les guillemets
 
-                    // Condition : vérifier si la valeur contient uniquement des chiffres et dépasse 20 caractères
-                    if (firstValue.length() > 20 && firstValue.matches("\\d+")) {
-                        String extractedValue = firstValue.substring(0, firstValue.length()); // Récupérer la valeur entière
-                        maps.put(firstValue, extractedValue);
+                    // Vérifier si la valeur contient uniquement des chiffres
+                    if (firstValue.matches("\\d+")) {
+                        maps.put(firstValue, firstValue); // Ajouter au map
+                    } else {
+                        System.out.println("Valeur ignorée : " + firstValue);
                     }
                 }
             }
