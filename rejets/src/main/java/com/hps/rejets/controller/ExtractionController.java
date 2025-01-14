@@ -143,7 +143,7 @@ public class ExtractionController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8")
-                .body("Le fichier '" + fileName + "' a été généré et enregistré dans : " + outputPath.toString() + "\n\n" + sqlScript);
+                .body("Le fichier '" + fileName + "' a été généré  \n\n" + sqlScript);
     }
 
     @GetMapping("/download")
@@ -183,7 +183,7 @@ public class ExtractionController {
                 }
             }
 
-            return ResponseEntity.ok("Tous les fichiers des répertoires GENERATED_SCRIPTS_DIR et UPLOAD_DIR ont été supprimés avec succès.");
+            return ResponseEntity.ok("Tous les fichiers ont été supprimés avec succès.");
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de la suppression des fichiers : " + e.getMessage());
         }

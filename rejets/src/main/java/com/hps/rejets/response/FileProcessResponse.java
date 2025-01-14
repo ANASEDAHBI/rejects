@@ -13,7 +13,8 @@ import java.util.List;
 @NoArgsConstructor
 public class FileProcessResponse {
 
-    private List<ResultResponse> resultResponses;
     private Integer irdCount;
     private Integer insertCount;
+    private List<ResultResponse> resultResponses;
+
 }
