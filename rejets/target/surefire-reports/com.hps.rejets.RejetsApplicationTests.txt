@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.hps.rejets.RejetsApplicationTests
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 14.044 s - in com.hps.rejets.RejetsApplicationTests
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.161 s - in com.hps.rejets.RejetsApplicationTests
