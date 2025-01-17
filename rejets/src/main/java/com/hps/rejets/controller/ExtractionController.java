@@ -162,32 +162,39 @@ public class ExtractionController {
 
     @DeleteMapping("/delete")
     public ResponseEntity<String> deleteRecyclingScript() {
-        try {
-            // Supprimer tous les fichiers dans GENERATED_SCRIPTS_DIR
-            File generatedScriptsDir = new File(GENERATED_SCRIPTS_DIR);
-            if (generatedScriptsDir.exists() && generatedScriptsDir.isDirectory()) {
-                for (File file : generatedScriptsDir.listFiles()) {
-                    if (file.isFile()) {
+        // Supprimer tous les fichiers dans GENERATED_SCRIPTS_DIR
+        File generatedScriptsDir = new File(GENERATED_SCRIPTS_DIR);
+        if (generatedScriptsDir.exists() && generatedScriptsDir.isDirectory()) {
+            for (File file : generatedScriptsDir.listFiles()) {
+                if (file.isFile()) {
+                    try {
                         Files.delete(file.toPath());
+                        System.out.println("Fichier supprimé : " + file.getPath());
+                    } catch (IOException e) {
+                        System.err.println("Erreur lors de la suppression du fichier : " + file.getPath() + " - " + e.getMessage());
                     }
                 }
             }
-
-            // Supprimer tous les fichiers dans UPLOAD_DIR
-            File uploadDir = new File(UPLOAD_DIR);
-            if (uploadDir.exists() && uploadDir.isDirectory()) {
-                for (File file : uploadDir.listFiles()) {
-                    if (file.isFile()) {
-                        Files.delete(file.toPath());
-                    }
-                }
-            }
-
-            return ResponseEntity.ok("Tous les fichiers ont été supprimés avec succès.");
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de la suppression des fichiers : " + e.getMessage());
         }
+
+        // Supprimer tous les fichiers dans UPLOAD_DIR
+        File uploadDir = new File(UPLOAD_DIR);
+        if (uploadDir.exists() && uploadDir.isDirectory()) {
+            for (File file : uploadDir.listFiles()) {
+                if (file.isFile()) {
+                    try {
+                        Files.delete(file.toPath());
+                        System.out.println("Fichier supprimé : " + file.getPath());
+                    } catch (IOException e) {
+                        System.err.println("Erreur lors de la suppression du fichier : " + file.getPath() + " - " + e.getMessage());
+                    }
+                }
+            }
+        }
+
+        return ResponseEntity.ok("Tous les fichiers ont été supprimés avec succès.");
     }
+
 }
 
 
