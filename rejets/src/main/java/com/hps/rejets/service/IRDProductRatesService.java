@@ -171,9 +171,11 @@ public class IRDProductRatesService {
                             productFound = true;
                             // Retourne l'IRD s'il est différent de celui initial
                             if (!currentIRD.equals(ird)) {
+                                System.out.println("Product Found "+productId+" With  new IRD "+currentIRD);
                                 return currentIRD;
+                            }else {
+                                System.out.println("Product Found "+productId+" But IRD "+ird+" n'est pas différent de celui initial");
                             }
-                            System.out.println("Product Found "+productId+" But IRD "+ird+" n'est pas différent de celui initial");
                         } else {
                             productFound = false;
                             System.out.println("Product Not Found: " + productId + " sa valeur "+productFound);

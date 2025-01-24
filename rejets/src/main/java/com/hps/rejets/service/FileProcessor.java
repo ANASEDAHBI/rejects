@@ -40,6 +40,7 @@ public class FileProcessor {
                 if (fileLines.get(i).contains(value) && !foundIRDForCurrentValue) {
 
                     // **Traitement Alternatif (sans *P0158 S04)**
+                    /*
                     for (int l = i - 1; l >= 0; l--) {
                         String previousLine = fileLines.get(l);
                         if (previousLine.contains("GCMS PRODUCT ID") && previousLine.contains("INVALID FOR BUSINESS SERVICE ARRANGEMENT")) {
@@ -138,12 +139,15 @@ public class FileProcessor {
                         }
                     }
 
+                     */
+
                     if (!foundIRDForCurrentValue) {
                         // Logique Standard avec *P0158 S04
                         for (int j = i; j < fileLines.size(); j++) {
                             String lineToCheck = fileLines.get(j);
 
                             if (lineToCheck.contains("*P0158 S04")) {
+
                                 String[] parts = lineToCheck.split("\\s+");
 
                                 for (int k = 0; k < parts.length; k++) {
